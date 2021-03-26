@@ -3,6 +3,7 @@ package face
 import (
 	"fmt"
 	"github.com/kataras/iris"
+	"math"
 	"net/url"
 	"strings"
 )
@@ -16,12 +17,24 @@ import (
 //inter macro define
 const (
 	HttpProtocol = "://"
+	MaxPagesPerTime = 10
 )
+
+//single page info
+type PageInfo struct {
+	Idx string //page num
+	Active bool //current page
+	Prev string
+	PrevDisable bool //disable click
+	Next string
+	NextDisable bool //disable click
+	Query string `main query param info`
+	Request string `main request`
+}
 
 //face info
 type Web struct {
 }
-
 
 //construct
 func NewWeb() *Web {
@@ -30,6 +43,79 @@ func NewWeb() *Web {
 	}
 	return this
 }
+
+//general page list
+func (w *Web) GenPageList(
+				req string,
+				query string,
+				curPage int,
+				totalRecords int,
+				recPerPage int,
+			) (PageInfo, []PageInfo) {
+	var (
+		startPage int
+		endPage int
+		active bool
+		prevNexPage PageInfo
+		pageList = make([]PageInfo, 0)
+	)
+
+	if curPage <= 0 {
+		curPage = 1
+	}
+
+	pages := math.Ceil(float64(totalRecords)/float64(recPerPage))
+	totalPagesInt := int(pages)
+
+	//set request and query
+	prevNexPage.Request = req
+	prevNexPage.Query = query
+
+	//init prev、next page
+	if curPage <= 1 {
+		prevNexPage.Prev = "1"
+		prevNexPage.PrevDisable = true
+	}else{
+		prevNexPage.Prev = fmt.Sprintf("%d", curPage - 1)
+		prevNexPage.PrevDisable = false
+	}
+
+	if curPage >= totalPagesInt {
+		prevNexPage.Next = fmt.Sprintf("%d", totalPagesInt)
+		prevNexPage.NextDisable = true
+	}else{
+		prevNexPage.Next = fmt.Sprintf("%d", curPage+1)
+		prevNexPage.NextDisable = false
+	}
+
+	//set batch pages
+	startPage = curPage - MaxPagesPerTime/2
+	if startPage <= 0 {
+		startPage = 1
+	}
+
+	endPage = curPage + MaxPagesPerTime/2
+	if endPage >= totalPagesInt {
+		endPage = totalPagesInt
+	}
+
+	//init page list
+	for i := startPage; i <= endPage; i++ {
+		active = false
+		if i == curPage {
+			active = true
+		}
+		pageInfo := PageInfo{
+			Idx:fmt.Sprintf("%d", i),
+			Query:query,
+			Request:req,
+			Active:active,
+		}
+		pageList = append(pageList, pageInfo)
+	}
+	return prevNexPage, pageList
+}
+
 
 //get refer domain
 func (w *Web) GetReferDomain(referUrl string) string {
