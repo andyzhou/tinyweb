@@ -2,6 +2,7 @@ package face
 
 import (
 	"fmt"
+	"github.com/andyzhou/tinyweb/iface"
 	"github.com/kataras/iris/v12"
 	"math"
 	"net/url"
@@ -20,17 +21,7 @@ const (
 	MaxPagesPerTime = 10
 )
 
-//single page info
-type PageInfo struct {
-	Idx string //page num
-	Active bool //current page
-	Prev string
-	PrevDisable bool //disable click
-	Next string
-	NextDisable bool //disable click
-	Query string `main query param info`
-	Request string `main request`
-}
+
 
 //face info
 type Web struct {
@@ -51,13 +42,13 @@ func (w *Web) GenPageList(
 				curPage int,
 				totalRecords int,
 				recPerPage int,
-			) (PageInfo, []PageInfo) {
+			) (iface.PageInfo, []iface.PageInfo) {
 	var (
 		startPage int
 		endPage int
 		active bool
-		prevNexPage PageInfo
-		pageList = make([]PageInfo, 0)
+		prevNexPage iface.PageInfo
+		pageList = make([]iface.PageInfo, 0)
 	)
 
 	if curPage <= 0 {
@@ -105,7 +96,7 @@ func (w *Web) GenPageList(
 		if i == curPage {
 			active = true
 		}
-		pageInfo := PageInfo{
+		pageInfo := iface.PageInfo{
 			Idx:fmt.Sprintf("%d", i),
 			Query:query,
 			Request:req,

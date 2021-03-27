@@ -1,8 +1,8 @@
 package iface
 
-import "github.com/kataras/iris"
+import "github.com/kataras/iris/v12"
 
 type ICaptcha interface {
 	GenImg(ctx iris.Context)
-	SetCookie(name string, expire int64) bool
+	SetCookiePara(name string, expire int) bool
 }

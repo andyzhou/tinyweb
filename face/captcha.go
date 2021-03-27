@@ -41,7 +41,7 @@ func NewCaptcha() *Captcha {
 }
 
 //set cookie config
-func (f *Captcha) SetCookie(name string, expire int) bool {
+func (f *Captcha) SetCookiePara(name string, expire int) bool {
 	if name == "" || expire < 0 {
 		return false
 	}
@@ -56,7 +56,7 @@ func (f *Captcha) GenImg(ctx iris.Context) {
 	img, str := f.cap.Create(CaptchaNumSize, captcha.NUM)
 
 	//set cookie
-	f.cookie.SetCookie(f.cookieName, str, f.cookieExpire)
+	f.cookie.SetCookie(f.cookieName, str, f.cookieExpire, ctx)
 
 	//get writer
 	writer := ctx.ResponseWriter()
