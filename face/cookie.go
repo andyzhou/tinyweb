@@ -2,8 +2,7 @@ package face
 
 import (
 	"github.com/gorilla/securecookie"
-	"github.com/kataras/iris"
-	"github.com/kataras/iris/context"
+	"github.com/kataras/iris/v12"
 	"time"
 )
 
@@ -53,7 +52,7 @@ func (f *Cookie) SetCoreData(app *iris.Application) bool {
 }
 
 //delete cookie
-func (f *Cookie) DelCookie(key string, ctx context.Context) bool {
+func (f *Cookie) DelCookie(key string, ctx iris.Context) bool {
 	if key == "" {
 		return false
 	}
@@ -62,7 +61,7 @@ func (f *Cookie) DelCookie(key string, ctx context.Context) bool {
 }
 
 //get cookie
-func (f *Cookie) GetCookie(key string, ctx context.Context) string {
+func (f *Cookie) GetCookie(key string, ctx iris.Context) string {
 	if key == "" {
 		return ""
 	}
@@ -73,7 +72,7 @@ func (f *Cookie) GetCookie(key string, ctx context.Context) string {
 func (f *Cookie) SetCookie(
 						key, value string,
 						totalSeconds int,
-						ctx context.Context,
+						ctx iris.Context,
 					) bool {
 	if key == "" || value == "" || totalSeconds <= 0 {
 		return false

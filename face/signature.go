@@ -2,7 +2,8 @@ package face
 
 import (
 	"bytes"
-	"github.com/andyzhou/tinycells/tc"
+	"crypto/md5"
+	"encoding/hex"
 	"github.com/andyzhou/tinyweb/iface"
 	"sort"
 	"strings"
@@ -25,7 +26,6 @@ type SortField struct {
 type Signature struct {
 	signConf *iface.SignConf
 	skipFields map[string]bool
-	tc.Utils
 	sync.RWMutex
 }
 
@@ -160,6 +160,16 @@ func (s *Signature) createSorter(fields map[string]string) SortFields {
 	sort.Sort(sorter)
 
 	return sorter
+}
+
+//generate md5 string
+func (s *Signature) GenMd5(orgString string) string {
+	if len(orgString) <= 0 {
+		return ""
+	}
+	m := md5.New()
+	m.Write([]byte(orgString))
+	return hex.EncodeToString(m.Sum(nil))
 }
 
 ///////////////////////

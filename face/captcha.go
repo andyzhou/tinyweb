@@ -3,7 +3,7 @@ package face
 import (
 	"fmt"
 	"github.com/afocus/captcha"
-	"github.com/kataras/iris"
+	"github.com/kataras/iris/v12"
 	"image/color"
 	"image/png"
 )
@@ -24,7 +24,7 @@ const (
 type Captcha struct {
 	fontPath string
 	cookieName string
-	cookieExpire int64
+	cookieExpire int
 	cap *captcha.Captcha
 	cookie *Cookie
 }
@@ -41,7 +41,7 @@ func NewCaptcha() *Captcha {
 }
 
 //set cookie config
-func (f *Captcha) SetCookie(name string, expire int64) bool {
+func (f *Captcha) SetCookie(name string, expire int) bool {
 	if name == "" || expire < 0 {
 		return false
 	}
@@ -56,7 +56,7 @@ func (f *Captcha) GenImg(ctx iris.Context) {
 	img, str := f.cap.Create(CaptchaNumSize, captcha.NUM)
 
 	//set cookie
-	f.cookie.SetCookie(cookieName, str, cookieExpire, ctx)
+	f.cookie.SetCookie(f.cookieName, str, f.cookieExpire)
 
 	//get writer
 	writer := ctx.ResponseWriter()

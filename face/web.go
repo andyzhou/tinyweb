@@ -2,7 +2,7 @@ package face
 
 import (
 	"fmt"
-	"github.com/kataras/iris"
+	"github.com/kataras/iris/v12"
 	"math"
 	"net/url"
 	"strings"
