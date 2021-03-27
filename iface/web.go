@@ -25,6 +25,8 @@ type IWeb interface {
 		totalRecords int,
 		recPerPage int,
 	) (PageInfo, []PageInfo)
+	TrimHtml(src string, needLower bool) string
+	SubString(source string, start int, length int) string
 	GetReferDomain(referUrl string) string
 	GetParameter(paraKey string, httpForm url.Values, ctx iris.Context) string
 	GetParameterValues(name string, form url.Values, ctx iris.Context) []string

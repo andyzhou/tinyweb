@@ -6,6 +6,7 @@ import (
 	"github.com/kataras/iris/v12"
 	"math"
 	"net/url"
+	"regexp"
 	"strings"
 )
 
@@ -107,6 +108,45 @@ func (w *Web) GenPageList(
 	return prevNexPage, pageList
 }
 
+//sub string, support utf8 string
+func (w *Web) SubString(source string, start int, length int) string {
+	rs := []rune(source)
+	len := len(rs)
+	if start < 0 {
+		start = 0
+	}
+	if start >= len {
+		start = len
+	}
+	end := start + length
+	if end > len {
+		end = len
+	}
+	return string(rs[start:end])
+}
+
+//remove html tags
+func (w *Web) TrimHtml(src string, needLower bool) string {
+	var (
+		re *regexp.Regexp
+	)
+
+	if needLower {
+		//convert to lower
+		re, _ = regexp.Compile("\\<[\\S\\s]+?\\>")
+		src = re.ReplaceAllStringFunc(src, strings.ToLower)
+	}
+
+	//remove style
+	re, _ = regexp.Compile("\\<style[\\S\\s]+?\\</style\\>")
+	src = re.ReplaceAllString(src, "")
+
+	//remove script
+	re, _ = regexp.Compile("\\<script[\\S\\s]+?\\</script\\>")
+	src = re.ReplaceAllString(src, "")
+
+	return strings.TrimSpace(src)
+}
 
 //get refer domain
 func (w *Web) GetReferDomain(referUrl string) string {
