@@ -21,6 +21,13 @@ type Tpl struct {
 	tpl *view.HTMLEngine
 }
 
+//construct
+func NewTpl() *Tpl {
+	self := &Tpl{
+	}
+	return self
+}
+
 //register base tpl func
 func (f *Tpl) RegisterTplFunc(tpl *view.HTMLEngine) {
 	//add html function
