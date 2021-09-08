@@ -22,21 +22,41 @@ type Tpl struct {
 }
 
 //construct
-func NewTpl() *Tpl {
+func NewTpl(tpl *view.HTMLEngine) *Tpl {
 	self := &Tpl{
+		tpl: tpl,
 	}
 	return self
 }
 
+//register diy tpl func
+func (f *Tpl) RegisterTplFunc(
+					name string,
+					cb interface{},
+				) bool {
+	if name == "" || cb == nil {
+		return false
+	}
+	if f.tpl == nil {
+		return false
+	}
+	f.tpl.AddFunc(name, cb)
+	return true
+}
+
 //register base tpl func
-func (f *Tpl) RegisterTplFunc(tpl *view.HTMLEngine) {
+func (f *Tpl) RegisterTplBaseFunc() bool {
+	if f.tpl == nil {
+		return false
+	}
+
 	//add html function
-	tpl.AddFunc("html", func(text string) template.HTML {
+	f.tpl.AddFunc("html", func(text string) template.HTML {
 		return template.HTML(text)
 	})
 
 	//add substring function
-	tpl.AddFunc("substr", func(text string) string {
+	f.tpl.AddFunc("substr", func(text string) string {
 		if len(text) <= SubStrMaxLen {
 			return text
 		}
@@ -45,7 +65,7 @@ func (f *Tpl) RegisterTplFunc(tpl *view.HTMLEngine) {
 	})
 
 	//trim html function
-	tpl.AddFunc("trimHtml", func(text string) template.HTML {
+	f.tpl.AddFunc("trimHtml", func(text string) template.HTML {
 		if text == "" {
 			return template.HTML(text)
 		}
@@ -54,7 +74,7 @@ func (f *Tpl) RegisterTplFunc(tpl *view.HTMLEngine) {
 	})
 
 	//remove high light mark function
-	tpl.AddFunc("removeMark", func(text string) string {
+	f.tpl.AddFunc("removeMark", func(text string) string {
 		if text == "" {
 			return text
 		}
@@ -64,7 +84,7 @@ func (f *Tpl) RegisterTplFunc(tpl *view.HTMLEngine) {
 	})
 
 	//time stamp format
-	tpl.AddFunc("date", func(timeStamp int64) string {
+	f.tpl.AddFunc("date", func(timeStamp int64) string {
 		var (
 			dateTime string
 		)
@@ -74,7 +94,7 @@ func (f *Tpl) RegisterTplFunc(tpl *view.HTMLEngine) {
 		return f.TimeStamp2Date(timeStamp)
 	})
 
-	tpl.AddFunc("datetime", func(timeStamp int64) string {
+	f.tpl.AddFunc("datetime", func(timeStamp int64) string {
 		var (
 			dateTime string
 		)
@@ -84,7 +104,7 @@ func (f *Tpl) RegisterTplFunc(tpl *view.HTMLEngine) {
 		return f.TimeStamp2DateTime(timeStamp)
 	})
 
-	tpl.AddFunc("dayTime", func(timeStamp int64) string {
+	f.tpl.AddFunc("dayTime", func(timeStamp int64) string {
 		var (
 			dateTime string
 		)
@@ -94,7 +114,7 @@ func (f *Tpl) RegisterTplFunc(tpl *view.HTMLEngine) {
 		return f.TimeStampToDayStr(timeStamp)
 	})
 
-	tpl.AddFunc("second2Time", func(seconds int) string {
+	f.tpl.AddFunc("second2Time", func(seconds int) string {
 		var (
 			dateTime string
 		)
@@ -103,6 +123,7 @@ func (f *Tpl) RegisterTplFunc(tpl *view.HTMLEngine) {
 		}
 		return f.Seconds2TimeStr(seconds)
 	})
+	return true
 }
 
 //convert timestamp to date format, like YYYY-MM-DD
@@ -135,7 +156,6 @@ func (f *Tpl) TimeStampToDayStr(timeStamp int64) string {
 	day := tempSlice[2]
 	return fmt.Sprintf("%s %s, %s", time.Month(month).String(), day, year)
 }
-
 
 //convert seconds to time string format
 func (f *Tpl) Seconds2TimeStr(seconds int) string {
