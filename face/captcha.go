@@ -6,6 +6,7 @@ import (
 	"github.com/kataras/iris/v12"
 	"image/color"
 	"image/png"
+	"os"
 )
 /*
  * face for captcha
@@ -22,9 +23,9 @@ const (
 
 //face info
 type Captcha struct {
-	fontPath string
 	cookieName string
 	cookieExpire int
+	numSize int
 	cap *captcha.Captcha
 	cookie *Cookie
 }
@@ -34,10 +35,40 @@ func NewCaptcha() *Captcha {
 	//self init
 	this := &Captcha{
 		cap: captcha.New(),
+		numSize: CaptchaNumSize,
 	}
 	//inter init
 	this.interInit()
 	return this
+}
+
+//set image size
+func (f *Captcha) SetSize(width, height int) bool {
+	if width <= 0 || height <= 0 {
+		return false
+	}
+	//set captcha size
+	f.cap.SetSize(width, height)
+	return true
+}
+
+//set font path
+func (f *Captcha) SetFontPath(path string) bool {
+	if path == "" {
+		return false
+	}
+	fontFilePath := fmt.Sprintf("%s/comic.ttf", path)
+	f.cap.SetFont(fontFilePath)
+	return true
+}
+
+//captcha num, default 5
+func (f *Captcha) SetCaptchaNum(num int) bool {
+	if num <= 0 {
+		return false
+	}
+	f.numSize = num
+	return false
 }
 
 //set cookie config
@@ -53,7 +84,7 @@ func (f *Captcha) SetCookiePara(name string, expire int) bool {
 //gen image
 func (f *Captcha) GenImg(ctx iris.Context) {
 	//create captcha image
-	img, str := f.cap.Create(CaptchaNumSize, captcha.NUM)
+	img, str := f.cap.Create(f.numSize, captcha.NUM)
 
 	//set cookie
 	f.cookie.SetCookie(f.cookieName, str, f.cookieExpire, ctx)
@@ -75,12 +106,13 @@ func (f *Captcha) interInit() {
 	//init cookie
 	f.cookie = NewCookie()
 
-	//set font
-	fontFilePath := fmt.Sprintf("%s/comic.ttf", f.fontPath)
-	f.cap.SetFont(fontFilePath)
+	//get current pwd
+	pwd, _ := os.Getwd()
 
-	//set captcha size
-	f.cap.SetSize(CaptchaWidth, CaptchaHeight)
+	//set default values
+	f.SetCaptchaNum(CaptchaNumSize)
+	f.SetFontPath(pwd)
+	f.SetSize(CaptchaWidth, CaptchaHeight)
 
 	//set disturbance
 	f.cap.SetDisturbance(captcha.MEDIUM)
