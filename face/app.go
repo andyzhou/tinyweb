@@ -2,7 +2,6 @@ package face
 
 import (
 	"fmt"
-	"github.com/andyzhou/tinyweb/define"
 	"github.com/andyzhou/tinyweb/iface"
 	"github.com/kataras/iris/v12"
 )
@@ -49,36 +48,19 @@ func (f *IrisApp) Start(port int) bool {
 }
 
 //register root app entry
+//url like: /xxx or /xxx/{ParaName:string|integer}
 func (f *IrisApp) RegisterRootApp(
 						rootUrlPara string,
 						face iface.IIrisSubApp,
-						methods ...string,
 					) bool {
-	var (
-		reqMethod string
-	)
-
 	//check
 	if rootUrlPara == "" || face == nil {
 		return false
 	}
 
-	//get request method
-	if methods == nil {
-		reqMethod = define.ReqMethodOfGet
-	}else{
-		reqMethod = methods[0]
-	}
-
-	//set relate request
-	switch reqMethod {
-	case define.ReqMethodOfPost://post
-		f.app.Post(rootUrlPara, face.Entry)
-	case define.ReqMethodOfGet://get
-		fallthrough
-	default:
-		f.app.Get(rootUrlPara, face.Entry)
-	}
+	//set get、get request
+	f.app.Get(rootUrlPara, face.GetEntry)
+	f.app.Post(rootUrlPara, face.PostEntry)
 	return true
 }
 
