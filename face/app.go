@@ -96,7 +96,7 @@ func (f *IrisApp) SetTplPath(path string) bool {
 	f.tplPath = path
 
 	//init templates
-	tpl := iris.HTML(f.tplPath, ViewExtName)
+	tpl := iris.HTML(f.tplPath, ViewExtName).Reload(true)
 	f.app.RegisterView(tpl)
 
 	//init tpl face
