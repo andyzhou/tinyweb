@@ -81,6 +81,11 @@ func (f *Captcha) SetCookiePara(name string, expire int) bool {
 	return true
 }
 
+//get cookie value
+func (f *Captcha) GetCookie(ctx iris.Context) string {
+	return f.cookie.GetCookie(f.cookieName, ctx)
+}
+
 //gen image
 func (f *Captcha) GenImg(ctx iris.Context) {
 	//create captcha image
