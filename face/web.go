@@ -11,7 +11,7 @@ import (
 )
 
 /*
- * face for web
+ * face for web, base on iris
  * @author <AndyZhou>
  * @mail <diudiu8848@163.com>
  */

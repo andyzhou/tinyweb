@@ -10,6 +10,12 @@ import (
 	"time"
 )
 
+/*
+ * face for tpl, base on iris
+ * @author <AndyZhou>
+ * @mail <diudiu8848@163.com>
+ */
+
 //inter macro define
 const (
 	TimeLayOut = "2006-01-02 15:04:05" //can't be changed!!!
