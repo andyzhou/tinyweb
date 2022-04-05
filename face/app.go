@@ -94,14 +94,6 @@ func (f *WebApp) GetTplInterface() iface.ITpl {
 	return f.tpl
 }
 
-//set error code and cb
-func (f *WebApp) SetErrCode(code int, cb func(c *gin.Context)) bool {
-	if code < 0 || cb == nil {
-		return false
-	}
-	return true
-}
-
 //set static file path
 func (f *WebApp) SetStaticPath(url, path string) bool {
 	if url == "" || path == "" {

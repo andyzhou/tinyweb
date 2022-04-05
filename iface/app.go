@@ -10,7 +10,6 @@ type IWebApp interface {
 	Start(port int) bool
 	RegisterSubApp(reqUrlPara string, face IWebSubApp) bool
 	GetTplInterface() ITpl
-	SetErrCode(code int, cb func(c *gin.Context)) bool
 	SetStaticPath(url, path string) bool
 	SetTplPath(path string) bool
 }
