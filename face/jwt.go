@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/andyzhou/tinyweb/define"
 	"github.com/dgrijalva/jwt-go"
+	"sync"
 )
 
 /*
@@ -12,13 +13,25 @@ import (
  * @mail <diudiu8848@163.com>
  */
 
-//inter macro define
+//global variable for single instance
+var (
+	_jwt *Jwt
+	_jwtOnce sync.Once
+)
 
 //face info
 type Jwt struct {
 	secret string `secret key string`
 	token *jwt.Token `jwt token instance`
 	claims jwt.MapClaims `jwt claims object`
+}
+
+//get single instance
+func GetJwt() *Jwt {
+	_jwtOnce.Do(func() {
+		_jwt = NewJwt()
+	})
+	return _jwt
 }
 
 //construct

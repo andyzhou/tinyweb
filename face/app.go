@@ -2,13 +2,16 @@ package face
 
 import (
 	"fmt"
+	"github.com/andyzhou/tinyweb/define"
 	"github.com/andyzhou/tinyweb/iface"
+	"github.com/gin-gonic/gin"
 	"github.com/kataras/iris/v12"
+	"net/http"
 )
 
 /*
- * iris app face
- * - github.com/kataras/iris/v12
+ * gin app face
+ * - github.com/gin-gonic/gin
  */
 
 //inter macro define
@@ -17,78 +20,91 @@ const (
 )
 
 //face info
-type IrisApp struct {
+type WebApp struct {
+	port int //web port
+	httpServer *http.Server
+	server *gin.Engine //gin server
 	tplPath string //tpl root path
 	tpl iface.ITpl //tpl interface
-	app *iris.Application //iris application instance
 	runner *iris.Runner //iris runner
 }
 
 //construct
-func NewIrisApp() *IrisApp {
-	this := &IrisApp{
-		app: iris.New(),
+func NewWebApp(g *gin.Engine) *WebApp {
+	var (
+		s *gin.Engine
+	)
+	//check
+	if g != nil {
+		s = g
+	}else{
+		s = gin.Default()
+	}
+	//self init
+	this := &WebApp{
+		server: s,
 	}
 	return this
 }
 
 //start app service
-func (f *IrisApp) Start(port int) bool {
+func (f *WebApp) Start(port int) bool {
 	if port <= 0 {
 		return false
 	}
 
-	//init runner
-	runner := iris.Addr(fmt.Sprintf(":%d", port))
-	f.runner = &runner
+	//set port and address
+	f.port = port
+	addr := fmt.Sprintf(":%v", port)
 
 	//start app
-	go f.app.Run(*f.runner)
+	f.server.Run(addr)
 	return true
 }
 
 //register root app entry
 //url like: /xxx or /xxx/{ParaName:string|integer}
-func (f *IrisApp) RegisterRootApp(
+func (f *WebApp) RegisterRootApp(
 						rootUrlPara string,
-						face iface.IIrisSubApp,
+						face iface.IWebSubApp,
 					) bool {
 	//check
 	if rootUrlPara == "" || face == nil {
 		return false
 	}
 
-	//set get、get request
-	f.app.Get(rootUrlPara, face.GetEntry)
-	f.app.Post(rootUrlPara, face.PostEntry)
+	//root request route
+	rootAnyPath := fmt.Sprintf("/%v/*%v", rootUrlPara, define.AnyPath)
+
+	//set get、post request
+	f.server.Any(rootAnyPath, face.Entry)
 	return true
 }
 
 //get tpl interface
-func (f *IrisApp) GetTplInterface() iface.ITpl {
+func (f *WebApp) GetTplInterface() iface.ITpl {
 	return f.tpl
 }
 
 //set error code and cb
-func (f *IrisApp) SetErrCode(code int, cb func(ctx iris.Context)) bool {
+func (f *WebApp) SetErrCode(code int, cb func(c *gin.Context)) bool {
 	if code < 0 || cb == nil {
 		return false
 	}
-	f.app.OnErrorCode(code, cb)
 	return true
 }
 
 //set static file path
-func (f *IrisApp) SetStaticPath(url, path string) bool {
+func (f *WebApp) SetStaticPath(url, path string) bool {
 	if url == "" || path == "" {
 		return false
 	}
-	f.app.HandleDir(url, path)
+	f.server.Static(url, path)
 	return true
 }
 
 //set tpl root path
-func (f *IrisApp) SetTplPath(path string) bool {
+func (f *WebApp) SetTplPath(path string) bool {
 	if path == "" {
 		return false
 	}
@@ -96,10 +112,11 @@ func (f *IrisApp) SetTplPath(path string) bool {
 	f.tplPath = path
 
 	//init templates
-	tpl := iris.HTML(f.tplPath, ViewExtName).Reload(true)
-	f.app.RegisterView(tpl)
+	//tpl := iris.HTML(f.tplPath, ViewExtName).Reload(true)
+	//f.app.RegisterView(tpl)
+	f.server.LoadHTMLGlob(fmt.Sprintf("%v/*", f.tplPath))
 
 	//init tpl face
-	f.tpl = NewTpl(tpl)
+	f.tpl = NewTpl()
 	return true
 }

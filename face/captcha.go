@@ -1,9 +1,10 @@
 package face
 
 import (
+	"errors"
 	"fmt"
 	"github.com/afocus/captcha"
-	"github.com/kataras/iris/v12"
+	"github.com/gin-gonic/gin"
 	"image/color"
 	"image/png"
 	"os"
@@ -19,6 +20,7 @@ const (
 	CaptchaWidth = 128
 	CaptchaHeight = 48
 	CaptchaNumSize = 5
+	CaptchaCookieField = "captcha"
 )
 
 //face info
@@ -82,24 +84,39 @@ func (f *Captcha) SetCookiePara(name string, expire int) bool {
 }
 
 //get cookie value
-func (f *Captcha) GetCookie(ctx iris.Context) string {
-	return f.cookie.GetCookie(f.cookieName, ctx)
+func (f *Captcha) GetCookie(c *gin.Context) (string, error) {
+	cookieVal, err := f.cookie.GetCookie(f.cookieName, c)
+	if err != nil {
+		return "", err
+	}
+	v, ok := cookieVal[CaptchaCookieField]
+	if !ok || v == nil {
+		return "", errors.New("invalid captcha value")
+	}
+	captchaVal, _ := v.(string)
+	return captchaVal, nil
 }
 
 //gen image
-func (f *Captcha) GenImg(ctx iris.Context) {
+func (f *Captcha) GenImg(c *gin.Context) {
 	//create captcha image
 	img, str := f.cap.Create(f.numSize, captcha.NUM)
 
+	//set cookie value
+	cookieVal := map[string]interface{}{
+		CaptchaCookieField: str,
+	}
+
 	//set cookie
-	f.cookie.SetCookie(f.cookieName, str, f.cookieExpire, ctx)
+	f.cookie.SetCookie(f.cookieName, cookieVal, f.cookieExpire, "", c)
 
 	//get writer
-	writer := ctx.ResponseWriter()
-	writer.Header().Set("Content-Type", "image/png")
+	c.Header("Content-Type", "image/png")
+	//writer := c.ResponseWriter()
+	//writer.Header().Set("Content-Type", "image/png")
 
 	//output png image
-	png.Encode(writer, img)
+	png.Encode(c.Writer, img)
 }
 
 ///////////////
@@ -123,10 +140,10 @@ func (f *Captcha) interInit() {
 	f.cap.SetDisturbance(captcha.MEDIUM)
 
 	//set front and back color
-	f.cap.SetFrontColor(color.RGBA{255, 255, 255, 255})
+	f.cap.SetFrontColor(color.RGBA{R: 255, G: 255, B: 255, A: 255})
 	f.cap.SetBkgColor(
-						color.RGBA{255, 0, 0, 255},
-						color.RGBA{0, 0, 255, 255},
-						color.RGBA{0, 153, 0, 255},
+						color.RGBA{R: 255, A: 255},
+						color.RGBA{B: 255, A: 255},
+						color.RGBA{G: 153, A: 255},
 					)
 }

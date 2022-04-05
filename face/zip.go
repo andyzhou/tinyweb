@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"io"
 	"log"
+	"sync"
 )
 
 /*
@@ -15,15 +16,28 @@ import (
  * @mail <diudiu8848@163.com>
  */
 
+//global variable for single instance
+var (
+	_zip *Zip
+	_zipOnce sync.Once
+)
+
 //face info
 type Zip struct {
+}
+
+//get single instance
+func GetZip() *Zip {
+	_zipOnce.Do(func() {
+		_zip = NewZip()
+	})
+	return _zip
 }
 
 //construct
 func NewZip() *Zip {
 	//self init
 	this := &Zip{
-
 	}
 	return this
 }

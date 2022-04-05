@@ -2,7 +2,6 @@ package face
 
 import (
 	"fmt"
-	"github.com/kataras/iris/v12/view"
 	"html/template"
 	"regexp"
 	"strconv"
@@ -24,15 +23,21 @@ const (
 
 //face info
 type Tpl struct {
-	tpl *view.HTMLEngine
+	funcMap template.FuncMap
+	//tpl *view.HTMLEngine
 }
 
 //construct
-func NewTpl(tpl *view.HTMLEngine) *Tpl {
+func NewTpl() *Tpl {
 	self := &Tpl{
-		tpl: tpl,
+		funcMap: template.FuncMap{},
 	}
 	return self
+}
+
+//get func map
+func (f *Tpl) GetFuncMap() template.FuncMap {
+	return f.funcMap
 }
 
 //register diy tpl func
@@ -43,93 +48,71 @@ func (f *Tpl) RegisterTplFunc(
 	if name == "" || cb == nil {
 		return false
 	}
-	if f.tpl == nil {
+	if f.funcMap == nil {
 		return false
 	}
-	f.tpl.AddFunc(name, cb)
+	//check
+	_, ok := f.funcMap[name]
+	if ok {
+		return false
+	}
+	f.funcMap[name] = cb
 	return true
 }
 
 //register base tpl func
 func (f *Tpl) RegisterTplBaseFunc() bool {
-	if f.tpl == nil {
+	if f.funcMap == nil {
 		return false
 	}
 
 	//add html function
-	f.tpl.AddFunc("html", func(text string) template.HTML {
-		return template.HTML(text)
-	})
+	f.funcMap["html"] = f.HtmlData
 
 	//add substring function
-	f.tpl.AddFunc("substr", func(text string) string {
-		if len(text) <= SubStrMaxLen {
-			return text
-		}
-		final := fmt.Sprintf("%s..", f.SubString(text, 0, SubStrMaxLen))
-		return final
-	})
+	f.funcMap["substr"] = f.SubStr
 
 	//trim html function
-	f.tpl.AddFunc("trimHtml", func(text string) template.HTML {
-		if text == "" {
-			return template.HTML(text)
-		}
-		text = f.TrimHtml(text, true)
-		return template.HTML(text)
-	})
+	f.funcMap["trimHtml"] = f.TrimHtml
 
 	//remove high light mark function
-	f.tpl.AddFunc("removeMark", func(text string) string {
-		if text == "" {
-			return text
-		}
-		re, _ := regexp.Compile("\\<\\/?mark\\>")
-		text = re.ReplaceAllString(text, "")
-		return text
-	})
+	f.funcMap["removeMark"] = f.RemoveMark
 
 	//time stamp format
-	f.tpl.AddFunc("date", func(timeStamp int64) string {
-		var (
-			dateTime string
-		)
-		if timeStamp <= 0 {
-			return dateTime
-		}
-		return f.TimeStamp2Date(timeStamp)
-	})
+	f.funcMap["date"] = f.TimeStamp2Date
+	f.funcMap["datetime"] = f.TimeStamp2DateTime
+	f.funcMap["dayTime"] = f.TimeStampToDayStr
+	f.funcMap["second2Time"] = f.Seconds2TimeStr
 
-	f.tpl.AddFunc("datetime", func(timeStamp int64) string {
-		var (
-			dateTime string
-		)
-		if timeStamp <= 0 {
-			return dateTime
-		}
-		return f.TimeStamp2DateTime(timeStamp)
-	})
-
-	f.tpl.AddFunc("dayTime", func(timeStamp int64) string {
-		var (
-			dateTime string
-		)
-		if timeStamp <= 0 {
-			return dateTime
-		}
-		return f.TimeStampToDayStr(timeStamp)
-	})
-
-	f.tpl.AddFunc("second2Time", func(seconds int) string {
-		var (
-			dateTime string
-		)
-		if seconds <= 0 {
-			return dateTime
-		}
-		return f.Seconds2TimeStr(seconds)
-	})
 	return true
+}
+
+///////////////
+//private func
+///////////////
+
+//remove mark
+func (f *Tpl) RemoveMark(text string) string {
+	if text == "" {
+		return text
+	}
+	re, _ := regexp.Compile("\\<\\/?mark\\>")
+	text = re.ReplaceAllString(text, "")
+	return text
+}
+
+//html data
+func (f *Tpl) HtmlData(text string) template.HTML {
+	return template.HTML(text)
+}
+
+//sub string
+func (f *Tpl) SubStr(text string) string {
+	if len(text) <= SubStrMaxLen {
+		return text
+	}
+	final := fmt.Sprintf("%s..", f.SubString(text, 0, SubStrMaxLen))
+	return final
 }
 
 //convert timestamp to date format, like YYYY-MM-DD
@@ -220,16 +203,18 @@ func (f *Tpl) SubString(source string, start int, length int) string {
 }
 
 //remove html tags
-func (f *Tpl) TrimHtml(src string, needLower bool) string {
+func (f *Tpl) TrimHtml(src string) string {
 	var (
 		re *regexp.Regexp
 	)
 
-	if needLower {
-		//convert to lower
-		re, _ = regexp.Compile("\\<[\\S\\s]+?\\>")
-		src = re.ReplaceAllStringFunc(src, strings.ToLower)
+	if src == "" {
+		return src
 	}
+
+	//convert to lower
+	re, _ = regexp.Compile("\\<[\\S\\s]+?\\>")
+	src = re.ReplaceAllStringFunc(src, strings.ToLower)
 
 	//remove style
 	re, _ = regexp.Compile("\\<style[\\S\\s]+?\\</style\\>")

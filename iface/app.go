@@ -1,19 +1,20 @@
 package iface
 
-import "github.com/kataras/iris/v12"
+import (
+	"github.com/gin-gonic/gin"
+)
 
-//iris app interface
-type IIrisApp interface {
+//web app interface
+type IWebApp interface {
 	Start(port int) bool
-	RegisterRootApp(rootUrlPara string, face IIrisSubApp) bool
+	RegisterRootApp(rootUrlPara string, face IWebSubApp) bool
 	GetTplInterface() ITpl
-	SetErrCode(code int, cb func(ctx iris.Context)) bool
+	SetErrCode(code int, cb func(c *gin.Context)) bool
 	SetStaticPath(url, path string) bool
 	SetTplPath(path string) bool
 }
 
-//sub iris app interface
-type IIrisSubApp interface {
-	PostEntry(ctx iris.Context)
-	GetEntry(ctx iris.Context)
+//sub web app interface
+type IWebSubApp interface {
+	Entry(c *gin.Context)
 }

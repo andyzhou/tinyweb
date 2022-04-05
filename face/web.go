@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"github.com/andyzhou/tinyweb/iface"
 	"github.com/kataras/iris/v12"
+	"sync"
+
+	//"github.com/kataras/iris/v12"
 	"math"
 	"net/url"
 	"regexp"
@@ -22,10 +25,22 @@ const (
 	MaxPagesPerTime = 10
 )
 
-
+//global variable for single instance
+var (
+	_web *Web
+	_webOnce sync.Once
+)
 
 //face info
 type Web struct {
+}
+
+//get single instance
+func GetWeb() *Web {
+	_webOnce.Do(func() {
+		_web = NewWeb()
+	})
+	return _web
 }
 
 //construct

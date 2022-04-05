@@ -1,2 +1,2 @@
-# tinyweb
-web develop base library
+# tiny web
+web develop base library, base on gin

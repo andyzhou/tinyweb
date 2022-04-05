@@ -16,6 +16,12 @@ import (
  * @mail <diudiu8848@163.com>
  */
 
+//global variable for single instance
+var (
+	_signature *Signature
+	_signatureOnce sync.Once
+)
+
 //sort field info
 type SortField struct {
 	Field string
@@ -27,6 +33,14 @@ type Signature struct {
 	signConf *iface.SignConf
 	skipFields map[string]bool
 	sync.RWMutex
+}
+
+//get single instance
+func GetSignature() *Signature {
+	_signatureOnce.Do(func() {
+		_signature = NewSignature()
+	})
+	return _signature
 }
 
 //construct
