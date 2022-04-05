@@ -5,8 +5,8 @@ import (
 	"github.com/andyzhou/tinyweb/define"
 	"github.com/andyzhou/tinyweb/iface"
 	"github.com/gin-gonic/gin"
-	"github.com/kataras/iris/v12"
 	"net/http"
+	"sync"
 )
 
 /*
@@ -26,17 +26,18 @@ type WebApp struct {
 	server *gin.Engine //gin server
 	tplPath string //tpl root path
 	tpl iface.ITpl //tpl interface
-	runner *iris.Runner //iris runner
+	//runner *iris.Runner //iris runner
+	wg sync.WaitGroup
 }
 
 //construct
-func NewWebApp(g *gin.Engine) *WebApp {
+func NewWebApp(g ...*gin.Engine) *WebApp {
 	var (
 		s *gin.Engine
 	)
 	//check
-	if g != nil {
-		s = g
+	if g != nil && len(g) > 0 {
+		s = g[0]
 	}else{
 		s = gin.Default()
 	}
@@ -47,7 +48,12 @@ func NewWebApp(g *gin.Engine) *WebApp {
 	return this
 }
 
-//start app service
+//stop app
+func (f *WebApp) Stop() {
+	f.wg.Done()
+}
+
+//start app
 func (f *WebApp) Start(port int) bool {
 	if port <= 0 {
 		return false
@@ -58,26 +64,28 @@ func (f *WebApp) Start(port int) bool {
 	addr := fmt.Sprintf(":%v", port)
 
 	//start app
+	f.wg.Add(1)
 	f.server.Run(addr)
+	f.wg.Wait()
 	return true
 }
 
 //register root app entry
 //url like: /xxx or /xxx/{ParaName:string|integer}
-func (f *WebApp) RegisterRootApp(
-						rootUrlPara string,
+func (f *WebApp) RegisterSubApp(
+						reqUrlPara string,
 						face iface.IWebSubApp,
 					) bool {
 	//check
-	if rootUrlPara == "" || face == nil {
+	if reqUrlPara == "" || face == nil {
 		return false
 	}
 
 	//root request route
-	rootAnyPath := fmt.Sprintf("/%v/*%v", rootUrlPara, define.AnyPath)
+	requestAnyPath := fmt.Sprintf("/%v/*%v", reqUrlPara, define.AnyPath)
 
 	//set get、post request
-	f.server.Any(rootAnyPath, face.Entry)
+	f.server.Any(requestAnyPath, face.Entry)
 	return true
 }
 
@@ -112,8 +120,6 @@ func (f *WebApp) SetTplPath(path string) bool {
 	f.tplPath = path
 
 	//init templates
-	//tpl := iris.HTML(f.tplPath, ViewExtName).Reload(true)
-	//f.app.RegisterView(tpl)
 	f.server.LoadHTMLGlob(fmt.Sprintf("%v/*", f.tplPath))
 
 	//init tpl face

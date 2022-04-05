@@ -6,8 +6,9 @@ import (
 
 //web app interface
 type IWebApp interface {
+	Stop()
 	Start(port int) bool
-	RegisterRootApp(rootUrlPara string, face IWebSubApp) bool
+	RegisterSubApp(reqUrlPara string, face IWebSubApp) bool
 	GetTplInterface() ITpl
 	SetErrCode(code int, cb func(c *gin.Context)) bool
 	SetStaticPath(url, path string) bool
