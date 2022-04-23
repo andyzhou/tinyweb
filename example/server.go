@@ -1,8 +1,7 @@
 package main
 
 import (
-	"github.com/andyzhou/tinyweb/face"
-	"github.com/andyzhou/tinyweb/iface"
+	"github.com/andyzhou/tinyweb"
 )
 
 //inter macro define
@@ -12,12 +11,11 @@ const (
 )
 
 func main() {
-	var (
-		app iface.IWebApp
-	)
+	//get web instance
+	web := tinyweb.GetWeb()
 
 	//init web app
-	app = face.NewWebApp()
+	app := web.GetWebApp()
 
 	//base setup
 	app.SetTplPath(tplDir)

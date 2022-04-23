@@ -94,6 +94,11 @@ func (f *WebApp) GetTplInterface() iface.ITpl {
 	return f.tpl
 }
 
+//get gin engine
+func (f *WebApp) GetGin() *gin.Engine {
+	return f.server
+}
+
 //set static file path
 func (f *WebApp) SetStaticPath(url, path string) bool {
 	if url == "" || path == "" {
@@ -117,4 +122,12 @@ func (f *WebApp) SetTplPath(path string) bool {
 	//init tpl face
 	f.tpl = NewTpl()
 	return true
+}
+
+//set gin reference
+func (f *WebApp) SetGin(gin *gin.Engine) {
+	if gin == nil {
+		return
+	}
+	f.server = gin
 }
