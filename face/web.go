@@ -1,9 +1,12 @@
 package face
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/andyzhou/tinyweb/iface"
-	"github.com/kataras/iris/v12"
+	"github.com/gin-gonic/gin"
+	"io/ioutil"
 	"sync"
 
 	//"github.com/kataras/iris/v12"
@@ -51,8 +54,69 @@ func NewWeb() *Web {
 	return this
 }
 
+//download data as file
+func (f *Web) DownloadAsFile(downloadName string, data []byte, c *gin.Context) error {
+	//check
+	if downloadName == "" || data == nil {
+		return errors.New("invalid parameter")
+	}
+
+	//setup header
+	c.Writer.Header().Add("Content-type", "application/octet-stream")
+	c.Writer.Header().Add("Content-Disposition", "attachment; filename= " + downloadName)
+
+	//write data into download file
+	_, err := c.Writer.Write(data)
+	return err
+}
+
+//calculate total pages
+func (f *Web) CalTotalPages(total, size int) int {
+	return int(math.Ceil(float64(total) / float64(size)))
+}
+
+//get json request body
+func (f *Web) GetJsonRequest(c *gin.Context, obj interface{}) error {
+	//try read body
+	jsonByte, err := f.GetRequestBody(c)
+	if err != nil {
+		return err
+	}
+	//try decode json data
+	err = json.Unmarshal(jsonByte, obj)
+	return err
+}
+
+//get request body
+func (f *Web) GetRequestBody(c *gin.Context) ([]byte, error) {
+	return ioutil.ReadAll(c.Request.Body)
+}
+
+//get request para
+func (f *Web) GetPara(name string, c *gin.Context) string {
+	//decode request url
+	decodedReqUrl, _ := url.PathUnescape(c.Request.URL.RawQuery)
+	values, _ := url.ParseQuery(decodedReqUrl)
+
+	//get act from url
+	if values != nil {
+		paraVal := values.Get(name)
+		if paraVal != "" {
+			return paraVal
+		}
+	}
+
+	//get act from query, post.
+	paraVal := c.Query(name)
+	if paraVal == "" {
+		//get from post
+		paraVal = c.PostForm(name)
+	}
+	return paraVal
+}
+
 //general page list
-func (w *Web) GenPageList(
+func (f *Web) GenPageList(
 				req string,
 				query string,
 				curPage int,
@@ -124,7 +188,7 @@ func (w *Web) GenPageList(
 }
 
 //sub string, support utf8 string
-func (w *Web) SubString(source string, start int, length int) string {
+func (f *Web) SubString(source string, start int, length int) string {
 	rs := []rune(source)
 	len := len(rs)
 	if start < 0 {
@@ -141,7 +205,7 @@ func (w *Web) SubString(source string, start int, length int) string {
 }
 
 //remove html tags
-func (w *Web) TrimHtml(src string, needLower bool) string {
+func (f *Web) TrimHtml(src string, needLower bool) string {
 	var (
 		re *regexp.Regexp
 	)
@@ -164,7 +228,7 @@ func (w *Web) TrimHtml(src string, needLower bool) string {
 }
 
 //get refer domain
-func (w *Web) GetReferDomain(referUrl string) string {
+func (f *Web) GetReferDomain(referUrl string) string {
 	var (
 		referDomain string
 	)
@@ -190,66 +254,12 @@ func (w *Web) GetReferDomain(referUrl string) string {
 	return referDomain
 }
 
-//get general parameter
-func (w *Web) GetParameter(
-					paraKey string,
-					httpForm url.Values,
-					ctx iris.Context,
-				) string {
-	//check and init http form
-	if httpForm == nil {
-		httpForm = w.GetHttpParameters(ctx)
-	}
-	//get relate para value
-	paraVal := httpForm.Get(paraKey)
-	if paraVal == "" {
-		paraVal = ctx.Params().Get(paraKey)
-		if paraVal == "" {
-			paraVal = ctx.PostValueTrim(paraKey)
-		}
-	}
-	return paraVal
-}
-
-//get all values of one parameter
-func (w *Web) GetParameterValues(
-					name string,
-					form url.Values,
-					ctx iris.Context,
-				) []string {
-	if form == nil {
-		return nil
-	}
-	vs := form[name]
-	if len(vs) == 0 {
-		return nil
-	}
-	return vs
-}
-
-//get http request parameters
-func (w *Web) GetHttpParameters(ctx iris.Context) url.Values {
-	var err error
-	//get request uri
-	reqUri := w.GetReqUri(ctx)
-	if reqUri == "" {
-		return nil
-	}
-	//parse form
-	queryForm, err := url.ParseQuery(reqUri)
-	if err != nil {
-		return nil
-	}
-	return queryForm
-}
-
 //get request uri
-func (w *Web) GetReqUri(ctx iris.Context) string {
+func (f *Web) GetReqUri(ctx *gin.Context) string {
 	var (
 		reqUriFinal string
 	)
-
-	reqUri := ctx.Request().URL.RawQuery
+	reqUri := ctx.Request.URL.RawQuery
 	reqUriNew, err := url.QueryUnescape(reqUri)
 	if err != nil {
 		return reqUriFinal
@@ -259,8 +269,8 @@ func (w *Web) GetReqUri(ctx iris.Context) string {
 }
 
 //get client ip
-func (w *Web) GetClientIp(ctx iris.Context) string {
-	clientIp := ctx.RemoteAddr()
+func (f *Web) GetClientIp(ctx *gin.Context) string {
+	clientIp := ctx.Request.RemoteAddr
 	xRealIp := ctx.GetHeader("X-Real-IP")
 	xForwardedFor := ctx.GetHeader("X-Forwarded-For")
 	if clientIp != "" {

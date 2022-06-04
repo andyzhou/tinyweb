@@ -1,8 +1,7 @@
 package iface
 
 import (
-	"github.com/kataras/iris/v12"
-	"net/url"
+	"github.com/gin-gonic/gin"
 )
 
 //single page info
@@ -18,6 +17,11 @@ type PageInfo struct {
 }
 
 type IWeb interface {
+	DownloadAsFile(downloadName string, data []byte, c *gin.Context) error
+	CalTotalPages(total, size int) int
+	GetJsonRequest(c *gin.Context, obj interface{}) error
+	GetRequestBody(c *gin.Context) ([]byte, error)
+	GetPara(name string, c *gin.Context) string
 	GenPageList(
 		req string,
 		query string,
@@ -28,9 +32,6 @@ type IWeb interface {
 	TrimHtml(src string, needLower bool) string
 	SubString(source string, start int, length int) string
 	GetReferDomain(referUrl string) string
-	GetParameter(paraKey string, httpForm url.Values, ctx iris.Context) string
-	GetParameterValues(name string, form url.Values, ctx iris.Context) []string
-	GetHttpParameters(ctx iris.Context) url.Values
-	GetReqUri(ctx iris.Context) string
-	GetClientIp(ctx iris.Context) string
+	GetReqUri(ctx *gin.Context) string
+	GetClientIp(ctx *gin.Context) string
 }

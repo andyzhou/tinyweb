@@ -26,5 +26,3 @@ func main() {
 	//start app
 	app.Start(serverPort)
 }
-
-//

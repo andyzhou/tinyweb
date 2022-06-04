@@ -26,6 +26,9 @@ func (f *SubApp) Entry(c *gin.Context) {
 		view View
 	)
 
+	//get request form
+
+
 	//set view
 	view.Title = "Home"
 	view.Nick = "You"

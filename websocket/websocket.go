@@ -4,6 +4,7 @@ import (
 	"github.com/andyzhou/tinyweb/define"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"io"
 	"log"
 	"net/http"
 	"runtime/debug"
@@ -14,6 +15,15 @@ import (
  * - http base on github.com/gin-gonic/gin
  * - ws base one github.com/gorilla/websocket
  */
+
+var upGrader = websocket.Upgrader{
+	ReadBufferSize:    4096,
+	WriteBufferSize:   4096,
+	EnableCompression: true,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
 
 //face info
 type WebSocket struct {
@@ -33,18 +43,24 @@ func NewWebSocket() *WebSocket {
 	return this
 }
 
-func (f *WebSocket) RegisterWs(gin *gin.Engine, rootUri ...string) {
-	//check
-
-	//set gin and websocket root uri
-	wsRootUri := define.WebSocketRoot
-	if rootUri != nil && len(rootUri) > 0 {
-		wsRootUri = rootUri[0]
-	}
-	f.wsRootUri = wsRootUri
+//set gin engine
+func (f *WebSocket) SetGin(gin *gin.Engine) {
 	f.gin = gin
 }
 
+//register web socket request uri
+func (f *WebSocket) RegisterWs(rootUri string) {
+	////check
+	//
+	////set gin and websocket root uri
+	//wsRootUri := define.WebSocketRoot
+	//if rootUri != nil && len(rootUri) > 0 {
+	//	wsRootUri = rootUri[0]
+	//}
+	//f.wsRootUri = wsRootUri
+	//f.gin = gin
+	f.gin.GET(rootUri, f.processConn)
+}
 
 //process web socket connect
 func (f *WebSocket) processConn(c *gin.Context) {
@@ -79,13 +95,28 @@ func (f *WebSocket) processConn(c *gin.Context) {
 	}
 
 	//accept new connect
-	_, err = f.connManager.Accept(session, conn)
+	wsConn, err := f.connManager.Accept(session, conn)
 	if err != nil {
 		err = f.connManager.CloseWithMessage(conn, define.MessageForNormalClosed)
 		if err != nil {
 			log.Printf("WebSocketServer:processRequest, err:%v", err.Error())
 		}
+		conn.Close()
 		return
+	}
+
+	//loop read data
+	for {
+		_, _, err := wsConn.Read()
+		if err != nil {
+			// handle error
+			if err == io.EOF {
+				log.Printf("ws EOF need close!")
+				return
+			}
+			log.Printf("ws err need close, err:%v", err.Error())
+			return
+		}
 	}
 }
 

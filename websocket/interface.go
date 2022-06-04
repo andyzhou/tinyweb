@@ -12,7 +12,8 @@ import (
 
 //interface of websocket
 type IWebsocket interface {
-	RegisterWs(gin *gin.Engine, rootUri ...string)
+	SetGin(gin *gin.Engine)
+	RegisterWs(rootUri string)
 	ProcessConn(c *gin.Context)
 	GetRootUri() string
 }
