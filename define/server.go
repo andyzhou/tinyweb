@@ -10,6 +10,7 @@ const (
 const (
 	QueryParaOfContentType = "type"
 	QueryParaOfSession = "session"
+	QueryParaOfUserId = "userId"
 )
 
 //request method

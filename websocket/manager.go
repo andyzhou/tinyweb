@@ -39,10 +39,7 @@ func (f *Manager) GetConnBySession(session string) *websocket.Conn {
 }
 
 //accept websocket connect
-func (f *Manager) Accept(
-	session string,
-	conn *websocket.Conn,
-) (IWSConn, error) {
+func (f *Manager) Accept(conn *websocket.Conn, session, userId string) (IWSConn, error) {
 	//check
 	if session == "" || conn == nil {
 		return nil, errors.New("invalid parameter")

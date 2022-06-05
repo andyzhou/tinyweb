@@ -5,7 +5,6 @@ import (
 	"github.com/andyzhou/tinyweb/define"
 	"github.com/andyzhou/tinyweb/iface"
 	"github.com/gin-gonic/gin"
-	"net/http"
 	"sync"
 )
 
@@ -22,7 +21,6 @@ const (
 //face info
 type WebApp struct {
 	port int //web port
-	httpServer *http.Server
 	server *gin.Engine //gin server
 	tplPath string //tpl root path
 	tpl iface.ITpl //tpl interface

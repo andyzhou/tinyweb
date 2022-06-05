@@ -16,6 +16,7 @@ import (
  * - ws base one github.com/gorilla/websocket
  */
 
+//upgrade http connect to ws connect
 var upGrader = websocket.Upgrader{
 	ReadBufferSize:    4096,
 	WriteBufferSize:   4096,
@@ -27,40 +28,87 @@ var upGrader = websocket.Upgrader{
 
 //face info
 type WebSocket struct {
-	wsRootUri string
-	gin *gin.Engine //parent reference
+	//cb func
+	cbForRead func(int, []byte) error
+	cbForCheck func(c *gin.Context) bool
+	cbForConnect func(c *gin.Context)
+
+	//key para
+	sessionKey string
+	userIdKey string
+
+	//inter reference
+	server *gin.Engine //parent reference
 	upgrade websocket.Upgrader
 	connManager IConnManager
 	coder ICoder
+	wsRootUri string
 }
 
 //construct
-func NewWebSocket() *WebSocket {
+func NewWebSocket(g ...*gin.Engine) *WebSocket {
+	var (
+		s *gin.Engine
+	)
+	//check
+	if g != nil && len(g) > 0 {
+		s = g[0]
+	}else{
+		s = gin.Default()
+	}
 	this := &WebSocket{
+		server: s,
 		connManager: NewManager(),
 		coder: NewCoder(),
+		sessionKey: define.QueryParaOfSession,
+		userIdKey: define.QueryParaOfUserId,
 	}
 	return this
 }
 
 //set gin engine
 func (f *WebSocket) SetGin(gin *gin.Engine) {
-	f.gin = gin
+	f.server = gin
+}
+
+//set key param
+func (f *WebSocket) SetKeyPara(session, userId string) {
+	if session != "" {
+		f.sessionKey = session
+	}
+	if userId != "" {
+		f.userIdKey = userId
+	}
+}
+
+//set cb for new connect
+func (f *WebSocket) SetConnCB(cbForConn func(c *gin.Context)) {
+	if f.cbForConnect != nil {
+		return
+	}
+	f.cbForConnect = cbForConn
+}
+
+//set cb for check
+func (f *WebSocket) SetCheckCB(cbForCheck func(c *gin.Context) bool) {
+	if f.cbForCheck != nil {
+		return
+	}
+	f.cbForCheck = cbForCheck
 }
 
 //register web socket request uri
-func (f *WebSocket) RegisterWs(rootUri string) {
-	////check
-	//
-	////set gin and websocket root uri
-	//wsRootUri := define.WebSocketRoot
-	//if rootUri != nil && len(rootUri) > 0 {
-	//	wsRootUri = rootUri[0]
-	//}
-	//f.wsRootUri = wsRootUri
-	//f.gin = gin
-	f.gin.GET(rootUri, f.processConn)
+func (f *WebSocket) RegisterWs(reqUrl string, cbForRead func(int, []byte) error) {
+	if f.cbForRead != nil {
+		return
+	}
+	f.cbForRead = cbForRead
+	f.server.GET(reqUrl, f.processConn)
 }
+
+///////////////
+//private func
+///////////////
 
 //process web socket connect
 func (f *WebSocket) processConn(c *gin.Context) {
@@ -77,8 +125,20 @@ func (f *WebSocket) processConn(c *gin.Context) {
 	writer := c.Writer
 
 	//get key param
-	session := c.Query(define.QueryParaOfSession)
-	//contentType := c.Query(define.QueryParaOfContentType)
+	session := c.Query(f.sessionKey)
+	userId := c.Query(f.userIdKey)
+
+	//cb for connect
+	if f.cbForConnect != nil {
+		f.cbForConnect(c)
+	}
+
+	//cb for check
+	if f.cbForCheck != nil {
+		if !f.cbForCheck(c) {
+			return
+		}
+	}
 
 	//setup net base data
 	//netBase := &NetBase{
@@ -95,7 +155,7 @@ func (f *WebSocket) processConn(c *gin.Context) {
 	}
 
 	//accept new connect
-	wsConn, err := f.connManager.Accept(session, conn)
+	wsConn, err := f.connManager.Accept(conn, session, userId)
 	if err != nil {
 		err = f.connManager.CloseWithMessage(conn, define.MessageForNormalClosed)
 		if err != nil {
@@ -106,20 +166,38 @@ func (f *WebSocket) processConn(c *gin.Context) {
 	}
 
 	//loop read data
+	go f.readConn(wsConn, session, userId)
+}
+
+//read process for per connect
+func (f *WebSocket) readConn(wsConn IWSConn, session, userId string) error {
+	//defer
+	defer func() {
+		if err := recover(); err != nil {
+			log.Printf("read connect panic, err:%v", err)
+		}
+	}()
+
+	//loop read data
 	for {
-		_, _, err := wsConn.Read()
+		//messageType, data, error
+		msgType, data, err := wsConn.Read()
 		if err != nil {
 			// handle error
 			if err == io.EOF {
 				log.Printf("ws EOF need close!")
-				return
+				return nil
 			}
 			log.Printf("ws err need close, err:%v", err.Error())
-			return
+			return err
+		}
+		//call cb for read
+		if f.cbForRead != nil {
+			f.cbForRead(msgType, data)
 		}
 	}
+	return nil
 }
-
 
 //inter init
 func (f *WebSocket) interInit() {
@@ -134,7 +212,7 @@ func (f *WebSocket) interInit() {
 	}
 
 	//setup websocket
-	if f.gin == nil {
+	if f.server == nil {
 		panic("WebSocket:interInit, gin instance is nil")
 		return
 	}

@@ -11,17 +11,18 @@ import (
  */
 
 //interface of websocket
-type IWebsocket interface {
+type IWebSocket interface {
+	RegisterWs(reqUrl string, cbForRead func(msgType int, data []byte) error)
+	SetCheckCB(cbForCheck func(c *gin.Context) bool)
+	SetConnCB(cbForConn func(c *gin.Context))
+	SetKeyPara(session, userId string)
 	SetGin(gin *gin.Engine)
-	RegisterWs(rootUri string)
-	ProcessConn(c *gin.Context)
-	GetRootUri() string
 }
 
 //interface of manager
 type IConnManager interface {
 	GetConnBySession(session string) *websocket.Conn
-	Accept(session string, conn *websocket.Conn) (IWSConn, error)
+	Accept(conn *websocket.Conn, session, userId string) (IWSConn, error)
 	CloseWithMessage(conn *websocket.Conn, message string) error
 	CloseConn(session string) error
 }
