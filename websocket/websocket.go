@@ -29,7 +29,7 @@ var upGrader = websocket.Upgrader{
 //face info
 type WebSocket struct {
 	//cb func
-	cbForRead func(int, []byte) error
+	cbForRead func(int, []byte) ([]byte, error)
 	cbForCheck func(c *gin.Context) bool
 	cbForConnect func(c *gin.Context)
 
@@ -98,7 +98,10 @@ func (f *WebSocket) SetCheckCB(cbForCheck func(c *gin.Context) bool) {
 }
 
 //register web socket request uri
-func (f *WebSocket) RegisterWs(reqUrl string, cbForRead func(int, []byte) error) {
+func (f *WebSocket) RegisterWs(
+						reqUrl string,
+						cbForRead func(int, []byte) ([]byte, error),
+					){
 	if f.cbForRead != nil {
 		return
 	}
@@ -193,7 +196,16 @@ func (f *WebSocket) readConn(wsConn IWSConn, session, userId string) error {
 		}
 		//call cb for read
 		if f.cbForRead != nil {
-			f.cbForRead(msgType, data)
+			resp, err := f.cbForRead(msgType, data)
+			if err != nil {
+				log.Printf("ws read resp failed, err:%v", err)
+				continue
+			}
+			//send response
+			err = wsConn.Write(msgType, resp)
+			if err != nil {
+				log.Printf("ws write resp failed, err:%v", err)
+			}
 		}
 	}
 	return nil
