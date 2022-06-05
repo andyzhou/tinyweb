@@ -16,7 +16,7 @@ type SubApp struct {
 }
 
 //construct
-func NewSubApp() *SubApp{
+func NewSubApp() *SubApp {
 	this := &SubApp{}
 	return this
 }
@@ -34,5 +34,5 @@ func (f *SubApp) Entry(c *gin.Context) {
 	view.Nick = "You"
 
 	//output page
-	c.HTML(http.StatusOK,  TplFile, view)
+	c.HTML(http.StatusOK, TplFile, view)
 }
