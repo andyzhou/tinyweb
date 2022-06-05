@@ -31,11 +31,14 @@ func NewWebSocket(g ...*gin.Engine) *WebSocket {
 }
 
 //send message
+func (f *WebSocket) SendMessage(msg []byte, userId ...string) error {
+	return nil
+}
 
 //register ws url and cb
 func (f *WebSocket) RegisterWS(
 						wsUrl string,
-						cbForRead func(int, []byte) error,
+						cbForRead func(int, []byte) ([]byte, error),
 					) error {
 	//check
 	if wsUrl == "" || cbForRead == nil {

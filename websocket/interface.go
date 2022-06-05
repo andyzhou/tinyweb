@@ -12,7 +12,7 @@ import (
 
 //interface of websocket
 type IWebSocket interface {
-	RegisterWs(reqUrl string, cbForRead func(msgType int, data []byte) error)
+	RegisterWs(reqUrl string, cbForRead func(msgType int, data []byte) ([]byte, error))
 	SetCheckCB(cbForCheck func(c *gin.Context) bool)
 	SetConnCB(cbForConn func(c *gin.Context))
 	SetKeyPara(session, userId string)
