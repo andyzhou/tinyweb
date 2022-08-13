@@ -28,9 +28,13 @@ var upGrader = websocket.Upgrader{
 
 //face info
 type WebSocket struct {
-	//cb func
+	//cb for read data
 	cbForRead func(int, []byte) ([]byte, error)
+
+	//cb for basic check
 	cbForCheck func(c *gin.Context) bool
+
+	//cb for new connect
 	cbForConnect func(c *gin.Context)
 
 	//key para
@@ -50,12 +54,13 @@ func NewWebSocket(g ...*gin.Engine) *WebSocket {
 	var (
 		s *gin.Engine
 	)
-	//check
+	//init default gin engine
 	if g != nil && len(g) > 0 {
 		s = g[0]
 	}else{
 		s = gin.Default()
 	}
+	//self init
 	this := &WebSocket{
 		server: s,
 		connManager: NewManager(),
@@ -63,6 +68,8 @@ func NewWebSocket(g ...*gin.Engine) *WebSocket {
 		sessionKey: define.QueryParaOfSession,
 		userIdKey: define.QueryParaOfUserId,
 	}
+	//inter init
+	this.interInit()
 	return this
 }
 

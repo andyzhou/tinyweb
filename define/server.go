@@ -1,5 +1,7 @@
 package define
 
+import "time"
+
 //websocket
 const (
 	WebSocketRoot = "/ws"
@@ -28,6 +30,7 @@ const (
 const (
 	ReqTimeOutSeconds = 10
 	ReqMaxConn = 256
+	SessionExpSecond = time.Hour * 24
 )
 
 const (

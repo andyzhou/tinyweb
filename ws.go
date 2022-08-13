@@ -23,9 +23,9 @@ type WebSocket struct {
 }
 
 //get single instance
-func GetWebSocket() *WebSocket {
+func GetWebSocket(g ...*gin.Engine) *WebSocket {
 	_websocketOnce.Do(func() {
-		_websocket = NewWebSocket()
+		_websocket = NewWebSocket(g...)
 	})
 	return _websocket
 }
