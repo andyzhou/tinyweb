@@ -39,14 +39,15 @@ func (f *SubModule) CalTotalPages(total, size int) int {
 	return int(math.Ceil(float64(total) / float64(size)))
 }
 
-//get para value
+//get para value, include Get and Post
 func (f *SubModule) GetPara(name string, c *gin.Context) string {
 	//get act from query, post.
 	act := c.Query(name)
-	if act == "" {
-		//get from post
-		act = c.PostForm(name)
+	if act != "" {
+		return act
 	}
+	//get from post
+	act = c.PostForm(name)
 	return act
 }
 

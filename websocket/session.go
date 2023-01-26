@@ -22,11 +22,10 @@ func (s *Session) SetExpire(exp time.Duration) {
 }
 
 //create session
-func (s *Session) CreateSession(userId string) (string, error) {
+func (s *Session) CreateSession() (string, error) {
 	session := s.generateUUId()
 	return session, nil
 }
-
 
 //generate uuid
 func (s *Session) generateUUId() string {

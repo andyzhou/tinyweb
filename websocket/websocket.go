@@ -18,8 +18,8 @@ import (
 
 //upgrade http connect to ws connect
 var upGrader = websocket.Upgrader{
-	ReadBufferSize:    4096,
-	WriteBufferSize:   4096,
+	ReadBufferSize:    define.WebSocketBufferSize,
+	WriteBufferSize:   define.WebSocketBufferSize,
 	EnableCompression: true,
 	CheckOrigin: func(r *http.Request) bool {
 		return true
@@ -46,6 +46,7 @@ type WebSocket struct {
 	upgrade websocket.Upgrader
 	connManager IConnManager
 	coder ICoder
+	session *Session
 	wsRootUri string
 }
 
@@ -65,6 +66,7 @@ func NewWebSocket(g ...*gin.Engine) *WebSocket {
 		server: s,
 		connManager: NewManager(),
 		coder: NewCoder(),
+		session: NewSession(),
 		sessionKey: define.QueryParaOfSession,
 		userIdKey: define.QueryParaOfUserId,
 	}
