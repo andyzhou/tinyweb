@@ -21,6 +21,7 @@ func NewSubApp() *SubApp {
 	return this
 }
 
+//main entry
 func (f *SubApp) Entry(c *gin.Context) {
 	var (
 		view View

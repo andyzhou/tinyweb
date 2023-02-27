@@ -59,6 +59,11 @@ func NewCookie() *Cookie {
 //api
 //////
 
+//set expire time
+func (f *Cookie) SetExpireTime(seconds int) {
+	f.expireTime = seconds
+}
+
 //delete cookie
 func (f *Cookie) DelCookie(name,
 			domain string,
