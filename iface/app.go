@@ -8,7 +8,7 @@ import (
 type IWebApp interface {
 	Stop()
 	Start(port int) bool
-	RegisterSubApp(reqUrlPara string, face IWebSubApp) bool
+	RegisterSubApp(reqUrlPara string, face IWebSubApp, incPathParas ...bool) bool
 
 	//get
 	GetTplInterface() ITpl
